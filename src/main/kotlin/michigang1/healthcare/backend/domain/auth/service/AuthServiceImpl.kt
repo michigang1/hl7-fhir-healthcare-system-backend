@@ -34,13 +34,13 @@ class AuthServiceImpl(
         Mono.fromCallable {
             // 1) найдём пользователя или бросим BadCredentialsException
             userRepository.findByUsername(request.username)
-                ?: throw BadCredentialsException("Invalid username or password")
+                ?: throw BadCredentialsException("Invalid sign-in credentials")
         }
             .subscribeOn(Schedulers.boundedElastic())
             .map { user ->
                 // 2) проверим пароль
                 if (!passwordEncoder.matches(request.password, user.password)) {
-                    throw BadCredentialsException("Invalid username or password")
+                    throw BadCredentialsException("Invalid sign-in credentials")
                 }
                 // 3) соберём authorities и JWT
                 val authorities = user.roles

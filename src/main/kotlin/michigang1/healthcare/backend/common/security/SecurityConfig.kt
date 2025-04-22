@@ -46,8 +46,8 @@ class SecurityConfig(
             }
             .authorizeExchange { authorize ->
                 authorize
-                    .pathMatchers("/api/auth/**").permitAll()
-                    .pathMatchers("/api/health").permitAll()
+                    .pathMatchers("/api/v1/auth/**").permitAll()
+                    .pathMatchers("/api/v1/health").permitAll()
                     .pathMatchers("/api/v1/user").authenticated()
                     .pathMatchers("/api/v1/user/**").authenticated()
                     .pathMatchers("/api/v1/health").permitAll()

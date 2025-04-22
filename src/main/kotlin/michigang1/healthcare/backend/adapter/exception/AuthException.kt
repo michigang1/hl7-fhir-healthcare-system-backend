@@ -1,13 +1,15 @@
 package michigang1.healthcare.backend.adapter.exception
 
 import org.springframework.http.HttpStatus
+import org.springframework.web.bind.MethodArgumentNotValidException
+import org.springframework.web.bind.support.WebExchangeBindException
 
 class UsernameAlreadyExistsAuthException : ApiException(
     httpStatus = HttpStatus.BAD_REQUEST,
     apiError = ApiError(
         status = HttpStatus.BAD_REQUEST.value(),
         error = "Username already exists",
-        description = "Error: Username is already taken!"
+        description = "Username must be unique!"
     )
 )
 class EmailAlreadyExistsAuthException   : ApiException(
@@ -15,7 +17,7 @@ class EmailAlreadyExistsAuthException   : ApiException(
     apiError = ApiError(
         status = HttpStatus.BAD_REQUEST.value(),
         error = "Email already exists",
-        description = "Error: Email is already in use!"
+        description = "Email must be unique!"
     )
 )
 class BadCredentialsExceptionAuthException : ApiException(
@@ -23,7 +25,7 @@ class BadCredentialsExceptionAuthException : ApiException(
     apiError = ApiError(
         status = HttpStatus.UNAUTHORIZED.value(),
         error = "Bad credentials",
-        description = "Error: Invalid username or password!"
+        description = "Invalid username or password!"
     )
 )
 
@@ -31,7 +33,7 @@ class RoleNotFoundAuthException : ApiException(
     httpStatus = HttpStatus.NOT_FOUND,
     apiError = ApiError(
         status = HttpStatus.NOT_FOUND.value(),
-        error = "Role not found",
-        description = "Error: Role not found!"
+        error = "Bad credentials",
+        description = "Role must be one of the existing roles"
     )
 )

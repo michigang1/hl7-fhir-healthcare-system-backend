@@ -1,8 +1,10 @@
 package michigang1.healthcare.backend.adapter.exception
 
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.bind.support.WebExchangeBindException
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
@@ -45,5 +47,15 @@ class GlobalExceptionHandler {
             description = exception.apiError.description
         ),
         exception.httpStatus
+    )
+
+    @ExceptionHandler(WebExchangeBindException::class)
+    fun handleMethodArgumentNotValidException(exception: WebExchangeBindException) = ResponseEntity(
+        ApiError(
+            status = exception.statusCode.value(),
+            error = "Credentials are not valid",
+            description = exception.fieldErrors.joinToString(". ") { "${it.defaultMessage}" }
+        ),
+        exception.statusCode
     )
 }

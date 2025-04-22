@@ -1,5 +1,6 @@
 package michigang1.healthcare.backend.adapter.rest
 
+import jakarta.validation.Valid
 import michigang1.healthcare.backend.domain.auth.payload.request.LoginRequest
 import michigang1.healthcare.backend.domain.auth.payload.request.SignupRequest
 import michigang1.healthcare.backend.domain.auth.payload.response.JwtResponse
@@ -11,17 +12,17 @@ import org.springframework.web.bind.annotation.*
 import reactor.core.publisher.Mono
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api/v1/auth")
 @Validated
 class AuthController(private val authService: AuthService) {
 
     @PostMapping("/signin")
-    fun signin(@RequestBody request: LoginRequest): Mono<ResponseEntity<JwtResponse>> =
+    fun signin(@Valid @RequestBody request: LoginRequest): Mono<ResponseEntity<JwtResponse>> =
         authService.authenticate(request)
             .map { ResponseEntity.ok(it) }
 
     @PostMapping("/signup")
-    fun signup(@RequestBody request: SignupRequest): Mono<ResponseEntity<MessageResponse>> =
+    fun signup(@Valid @RequestBody request: SignupRequest): Mono<ResponseEntity<MessageResponse>> =
         authService.register(request)
             .map { ResponseEntity.ok(it) }
 }

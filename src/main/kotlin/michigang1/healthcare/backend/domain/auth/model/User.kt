@@ -1,9 +1,8 @@
 package michigang1.healthcare.backend.domain.auth.model
 
 import jakarta.persistence.*
-import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.Size
+import jakarta.validation.constraints.Pattern
 
 @Entity
 @Table(name = "users")
@@ -26,5 +25,5 @@ data class User(
         joinColumns = [JoinColumn(name = "user_id")],
         inverseJoinColumns = [JoinColumn(name = "role_id")]
     )
-    val roles: Set<Role> = emptySet()
+    val roles: Set<Role> = emptySet(),
 )
