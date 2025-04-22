@@ -52,9 +52,10 @@ class SecurityConfig(
                     .pathMatchers("/api/v1/user/**").authenticated()
                     .pathMatchers("/api/v1/health").permitAll()
                     .pathMatchers("/api/v1/health/**").permitAll()
+                    .pathMatchers("/actuator/**").permitAll()
                     .anyExchange().authenticated()
-            }
 
+            }
             .addFilterAt(bearerAuthenticationFilter(), SecurityWebFiltersOrder.AUTHENTICATION)
         return http.build()
     }

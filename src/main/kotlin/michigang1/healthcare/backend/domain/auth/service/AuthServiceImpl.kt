@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional
 import michigang1.healthcare.backend.adapter.exception.EmailAlreadyExistsAuthException
 import michigang1.healthcare.backend.adapter.exception.UsernameAlreadyExistsAuthException
 import michigang1.healthcare.backend.common.security.JwtTokenProvider
+import michigang1.healthcare.backend.common.security.audit.AuditLogger
 import michigang1.healthcare.backend.domain.auth.model.RoleEnum
 import michigang1.healthcare.backend.domain.auth.model.User
 import michigang1.healthcare.backend.domain.auth.payload.request.LoginRequest
@@ -26,28 +27,20 @@ class AuthServiceImpl(
     private val userRepository: UserRepository,
     private val roleRepository: RoleRepository,
     private val passwordEncoder: PasswordEncoder,
-    private val tokenProvider: JwtTokenProvider
+    private val tokenProvider: JwtTokenProvider,
+    private val auditLogger: AuditLogger
 ) : AuthService {
 
     @Transactional
     override fun authenticate(request: LoginRequest): Mono<JwtResponse> =
         Mono.fromCallable {
-            // 1) найдём пользователя или бросим BadCredentialsException
-            userRepository.findByUsername(request.username)
-                ?: throw BadCredentialsException("Invalid sign-in credentials")
+            userRepository.findByUsername(request.username) ?: throw BadCredentialsException("Invalid sign-in credentials")
         }
             .subscribeOn(Schedulers.boundedElastic())
             .map { user ->
-                // 2) проверим пароль
-                if (!passwordEncoder.matches(request.password, user.password)) {
-                    throw BadCredentialsException("Invalid sign-in credentials")
-                }
-                // 3) соберём authorities и JWT
-                val authorities = user.roles
-                    .map { SimpleGrantedAuthority(it.name.name) }
-                val auth = UsernamePasswordAuthenticationToken(
-                    user.username, user.password, authorities
-                )
+                if (!passwordEncoder.matches(request.password, user.password)) throw BadCredentialsException("Invalid sign-in credentials")
+                val authorities = user.roles.map { SimpleGrantedAuthority(it.name.name) }
+                val auth = UsernamePasswordAuthenticationToken(user.username, user.password, authorities)
                 val token = tokenProvider.generateToken(auth)
                 JwtResponse(
                     token       = token,
@@ -57,6 +50,8 @@ class AuthServiceImpl(
                     roles       = user.roles.map { it.name.name }
                 )
             }
+            .doOnSuccess { auditLogger.loginSuccess(it.username) }
+            .doOnError { auditLogger.loginFailure(request.username) }
 
     @Transactional
     override fun register(request: SignupRequest): Mono<MessageResponse> =
@@ -88,5 +83,8 @@ class AuthServiceImpl(
             MessageResponse("User registered successfully!")
         }
             .subscribeOn(Schedulers.boundedElastic())
+            .doOnSuccess { auditLogger.registerSuccess(request.username) }
+            .doOnError { auditLogger.registerFailure(request.username) }
+
 }
 

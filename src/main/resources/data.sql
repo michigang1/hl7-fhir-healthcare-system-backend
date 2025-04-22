@@ -7,3 +7,4 @@ INSERT INTO roles(name) VALUES
                             ('ROLE_PHARMACIST'),
                             ('ROLE_RECEPTIONIST')
 ON CONFLICT (name) DO NOTHING;
+ddDdd
