@@ -1,8 +1,10 @@
 package michigang1.healthcare.backend.domain.auth.payload.request
 
+import com.fasterxml.jackson.annotation.JsonFormat
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 
+@JsonFormat(shape = JsonFormat.Shape.OBJECT)
 data class LoginRequest(
     @field:Pattern(
         regexp = "^[a-zA-Z0-9._-]{3,}$",

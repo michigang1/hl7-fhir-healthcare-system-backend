@@ -24,7 +24,7 @@ class AuditConfig {
             }
 
             override fun find(principal: String?, after: Instant?, type: String?): MutableList<AuditEvent> {
-                val events = auditRepo.findByPrincipal(principal ?: "")
+                val events = auditRepo.findAll()
                 return events.map {
                     PersistentAuditEvent(
                         principal = it.principal,

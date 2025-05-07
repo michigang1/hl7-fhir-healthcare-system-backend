@@ -17,6 +17,7 @@ java {
 
 repositories {
     mavenCentral()
+    google()
 }
 
 extra["springModulithVersion"] = "1.3.4"
@@ -56,6 +57,12 @@ dependencies {
     implementation("io.jsonwebtoken:jjwt-api:0.11.5")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.5")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.11.5")
+
+    implementation("com.google.fhir:r4:0.6.1")
+    // Для JSON-парсера/принтера protobuf
+    implementation("com.google.protobuf:protobuf-java-util:3.24.0")
+    // (по желанию) kotlinx-serialization для DTO
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
 
 
 }
