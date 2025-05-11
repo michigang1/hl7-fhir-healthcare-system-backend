@@ -1,6 +1,7 @@
 package michigang1.healthcare.backend.domain.patient.model
 
 import jakarta.persistence.*
+import michigang1.healthcare.backend.domain.diagnoses.Diagnosis
 
 
 @Entity
@@ -38,4 +39,13 @@ data class Patient(
     /** Ссылка на организацию, к которой привязан пациент */
     @Column(name = "organization_id")
     val organizationId: Long,
+
+    @OneToMany(
+        mappedBy = "patient",
+        cascade = [CascadeType.ALL],
+        orphanRemoval = true
+    )
+    val diagnoses: MutableSet<Diagnosis> = mutableSetOf(),
+
+
 )

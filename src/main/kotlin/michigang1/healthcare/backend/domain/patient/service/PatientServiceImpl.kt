@@ -1,10 +1,12 @@
 package michigang1.healthcare.backend.domain.patient.service
 
 import jakarta.transaction.Transactional
+import michigang1.healthcare.backend.domain.diagnoses.service.DiagnosisService
 import michigang1.healthcare.backend.domain.organization.service.OrganizationService
 import michigang1.healthcare.backend.domain.patient.payload.PatientRequest
 import michigang1.healthcare.backend.domain.patient.payload.PatientResponse
 import michigang1.healthcare.backend.domain.patient.repository.PatientRepository
+import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -15,7 +17,7 @@ import java.text.DateFormat
 @Service
 class PatientServiceImpl(
     private val patientRepository: PatientRepository,
-    private val organizationService: OrganizationService
+    private val organizationService: OrganizationService,
 ): PatientService {
     override fun getAll(): Flux<List<PatientResponse>> {
         return Mono.fromCallable { patientRepository.findAll() }
@@ -40,7 +42,9 @@ class PatientServiceImpl(
     }
     override fun getById(id: Long): Mono<PatientResponse?> {
         return Mono.fromCallable {
-            val patient = patientRepository.findById(id).orElseThrow()
+            val patient = patientRepository.findById(id).orElseThrow {
+                NoSuchElementException("Patient with ID $id not found")
+            }
             PatientResponse(
                 id = patient?.id,
                 name = patient?.firstName,
@@ -265,9 +269,13 @@ class PatientServiceImpl(
 
     @Transactional
     override fun deletePatient(id: Long): Boolean {
-        patientRepository.deleteById(id)
-        val result = patientRepository.existsById(id)
-        return !result
+        val patient = patientRepository.findById(id).orElseThrow {
+            NoSuchElementException("Patient with ID $id not found")
+        }
+
+        patientRepository.delete(patient!!)
+
+        return !patientRepository.existsById(id)
     }
 
 }

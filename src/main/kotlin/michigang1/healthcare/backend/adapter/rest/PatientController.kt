@@ -1,6 +1,7 @@
 package michigang1.healthcare.backend.adapter.rest
 
 
+import jakarta.transaction.Transactional
 import michigang1.healthcare.backend.domain.patient.payload.PatientRequest
 import michigang1.healthcare.backend.domain.patient.payload.PatientResponse
 import michigang1.healthcare.backend.domain.patient.service.PatientService
