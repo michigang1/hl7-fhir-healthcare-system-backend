@@ -26,11 +26,12 @@ class JwtTokenProvider(
         val exp = Date(now.time + jwtExpirationMs)
         val claims = Jwts.claims().setSubject(username)
         claims["roles"] = roles
+        // в JwtTokenProvider.generateToken():
         return Jwts.builder()
             .setClaims(claims)
             .setIssuedAt(now)
             .setExpiration(exp)
-            .signWith(SignatureAlgorithm.HS256, jwtSecret)
+            .signWith(secretKey, SignatureAlgorithm.HS256)
             .compact()
     }
 

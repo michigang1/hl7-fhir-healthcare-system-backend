@@ -19,24 +19,24 @@ class PatientController(
 ) {
 
     @GetMapping
-    @PreAuthorize("hasRole('ROLE_ADMIN') or" +
-                  " hasRole('ROLE_ORGANISATION_ADMIN') or hasRole('ROLE_DOCTOR') or" +
-                  " hasRole('ROLE_NURSE') or hasRole('ROLE_SOCIAL_WORKER')")
+    @PreAuthorize("hasRole('ADMIN') or" +
+                  " hasRole('ORGANISATION_ADMIN') or hasRole('DOCTOR') or" +
+                  " hasRole('NURSE') or hasRole('SOCIAL_WORKER')")
     fun getAllPatients(): Flux<List<PatientResponse>> =
         patientService.getAll()
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ROLE_ADMIN') or" +
-            " hasRole('ROLE_ORGANISATION_ADMIN') or hasRole('ROLE_DOCTOR') or" +
-            " hasRole('ROLE_NURSE') or hasRole('ROLE_SOCIAL_WORKER')")
+    @PreAuthorize("hasRole('ADMIN') or" +
+            " hasRole('ORGANISATION_ADMIN') or hasRole('DOCTOR') or" +
+            " hasRole('NURSE') or hasRole('SOCIAL_WORKER')")
     fun getPatientById(@PathVariable id: Long): Mono<ResponseEntity<PatientResponse?>> =
         patientService.getById(id)
             .map { ResponseEntity.ok(it) }
             .defaultIfEmpty(ResponseEntity.notFound().build())
 
     @PostMapping
-    @PreAuthorize("hasRole('ROLE_ADMIN') or" +
-            " hasRole('ROLE_ORGANISATION_ADMIN') or hasRole('ROLE_DOCTOR')")
+    @PreAuthorize("hasRole('ADMIN') or" +
+            " hasRole('ORGANISATION_ADMIN') or hasRole('DOCTOR')")
     fun createPatient(@RequestBody @Validated patientRequest: PatientRequest): Mono<ResponseEntity<PatientResponse>> =
         patientService.createPatient(patientRequest)
             .map { ResponseEntity.ok(it) }
@@ -44,8 +44,8 @@ class PatientController(
 
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ROLE_ADMIN') or" +
-            " hasRole('ROLE_ORGANISATION_ADMIN') or hasRole('ROLE_DOCTOR')")
+    @PreAuthorize("hasRole('ADMIN') or" +
+            " hasRole('ORGANISATION_ADMIN') or hasRole('DOCTOR')")
     fun updatePatient(
         @PathVariable id: Long,
         @RequestBody @Validated patientRequest: PatientRequest
@@ -56,8 +56,8 @@ class PatientController(
 
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ROLE_ADMIN') or" +
-            " hasRole('ROLE_ORGANISATION_ADMIN') or hasRole('ROLE_DOCTOR')")
+    @PreAuthorize("hasRole('ADMIN') or" +
+            " hasRole('ORGANISATION_ADMIN') or hasRole('DOCTOR')")
     fun deletePatient(@PathVariable id: Long): Mono<ResponseEntity<Boolean>> =
         Mono.fromCallable { patientService.deletePatient(id) }
             .map { ResponseEntity.ok(it) }

@@ -33,7 +33,7 @@ class SecurityConfig(
     fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
 
     @Bean
-    fun securityWebFilterChain(http: ServerHttpSecurity, jwtTokenProvider: JwtTokenProvider): SecurityWebFilterChain {
+    fun securityWebFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain {
         http
             .csrf { it.disable() }
             .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
@@ -53,7 +53,7 @@ class SecurityConfig(
                     .pathMatchers("/api/v1/health").permitAll()
                     .pathMatchers("/api/v1/health/**").permitAll()
                     .pathMatchers("/actuator/**").authenticated()
-                    .pathMatchers("/api/v1/patients").authenticated()
+                    .pathMatchers("/api/v1/patients", "/api/v1/patients/**").authenticated()
                     .anyExchange().authenticated()
 
             }

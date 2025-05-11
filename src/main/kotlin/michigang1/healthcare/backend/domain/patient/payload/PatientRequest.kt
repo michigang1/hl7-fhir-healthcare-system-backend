@@ -44,18 +44,9 @@ data class PatientRequest (
         regexp = "^\\+?[0-9]{10,15}$",
         message = "Phone number must be in a valid format"
     )
-
     val phone: String?,
-   //only numbers
-    @field:Pattern(
-        regexp = "^[0-9]+$",
-        message = "Identifier must contain only numbers"
-    )
 
     val identifier: Long?,
-    @field:Pattern(
-        regexp = "^[0-9]+$",
-        message = "Organization ID must contain only numbers"
-    )
+
     val organizationId: Long?,
 )
