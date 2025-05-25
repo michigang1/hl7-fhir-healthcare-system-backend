@@ -63,6 +63,4 @@ class AuditLogger(private val persistentAuditEventRepository: PersistentAuditEve
             )
         )
     }
-
-
 }

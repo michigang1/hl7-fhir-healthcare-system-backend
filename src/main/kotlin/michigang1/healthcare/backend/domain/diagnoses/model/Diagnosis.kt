@@ -1,9 +1,8 @@
-package michigang1.healthcare.backend.domain.diagnoses
+package michigang1.healthcare.backend.domain.diagnoses.model
 
 
 import jakarta.persistence.*
 import michigang1.healthcare.backend.domain.patient.model.Patient
-import java.time.Instant
 import java.time.LocalDate
 
 @Entity

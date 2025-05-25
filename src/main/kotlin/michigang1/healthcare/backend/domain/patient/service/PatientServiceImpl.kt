@@ -1,18 +1,15 @@
 package michigang1.healthcare.backend.domain.patient.service
 
 import jakarta.transaction.Transactional
-import michigang1.healthcare.backend.domain.diagnoses.service.DiagnosisService
 import michigang1.healthcare.backend.domain.organization.service.OrganizationService
 import michigang1.healthcare.backend.domain.patient.payload.PatientRequest
 import michigang1.healthcare.backend.domain.patient.payload.PatientResponse
 import michigang1.healthcare.backend.domain.patient.repository.PatientRepository
-import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.core.scheduler.Schedulers
-import reactor.kotlin.core.publisher.toFlux
-import java.text.DateFormat
+
 
 @Service
 class PatientServiceImpl(

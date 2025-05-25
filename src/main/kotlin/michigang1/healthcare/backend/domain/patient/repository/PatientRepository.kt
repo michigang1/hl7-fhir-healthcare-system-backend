@@ -2,7 +2,6 @@ package michigang1.healthcare.backend.domain.patient.repository
 
 import michigang1.healthcare.backend.domain.patient.model.Patient
 import org.springframework.data.jpa.repository.JpaRepository
-import org.springframework.stereotype.Repository
 import java.util.*
 
 interface PatientRepository: JpaRepository<Patient?, Long> {

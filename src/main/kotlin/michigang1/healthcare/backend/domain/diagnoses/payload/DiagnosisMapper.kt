@@ -1,7 +1,6 @@
 package michigang1.healthcare.backend.domain.diagnoses.payload
 
-import michigang1.healthcare.backend.domain.diagnoses.Diagnosis
-import michigang1.healthcare.backend.domain.diagnoses.payload.request.DiagnosisRequest
+import michigang1.healthcare.backend.domain.diagnoses.model.Diagnosis
 import michigang1.healthcare.backend.domain.diagnoses.payload.response.DiagnosisResponse
 import michigang1.healthcare.backend.domain.patient.model.Patient
 import org.springframework.stereotype.Component

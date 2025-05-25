@@ -1,14 +1,13 @@
 package michigang1.healthcare.backend.domain.diagnoses.service
 
 import jakarta.transaction.Transactional
-import michigang1.healthcare.backend.domain.diagnoses.Diagnosis
+import michigang1.healthcare.backend.domain.diagnoses.model.Diagnosis
 import michigang1.healthcare.backend.domain.diagnoses.payload.DiagnosisMapper
 import michigang1.healthcare.backend.domain.diagnoses.payload.request.DiagnosisRequest
 import michigang1.healthcare.backend.domain.diagnoses.payload.response.DiagnosisResponse
 import michigang1.healthcare.backend.domain.diagnoses.repository.DiagnosisRepository
 import michigang1.healthcare.backend.domain.patient.payload.PatientMapper
 import michigang1.healthcare.backend.domain.patient.service.PatientService
-import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono

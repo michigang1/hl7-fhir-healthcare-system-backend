@@ -1,6 +1,6 @@
 package michigang1.healthcare.backend.domain.diagnoses.repository
 
-import michigang1.healthcare.backend.domain.diagnoses.Diagnosis
+import michigang1.healthcare.backend.domain.diagnoses.model.Diagnosis
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface DiagnosisRepository: JpaRepository<Diagnosis, Long> {
