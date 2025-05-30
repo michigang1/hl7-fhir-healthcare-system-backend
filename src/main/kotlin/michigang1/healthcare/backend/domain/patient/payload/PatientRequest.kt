@@ -1,6 +1,7 @@
 package michigang1.healthcare.backend.domain.patient.payload
 
 import jakarta.validation.Valid
+import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Pattern
 import java.time.LocalDate
@@ -18,6 +19,10 @@ data class PatientRequest (
         message = "Surname must contain only letters, spaces, and hyphens"
     )
     val surname: String?,
+
+    @field:NotBlank
+    val roomNo: String?,
+
     @field:Pattern(
         regexp = "^(19|20)\\d{2}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
         message = "Date of birth must be in the format YYYY-MM-DD"

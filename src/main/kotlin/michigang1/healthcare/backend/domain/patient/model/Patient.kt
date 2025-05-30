@@ -18,6 +18,9 @@ data class Patient(
     val lastName: String,
 
     @Column(nullable = false)
+    val roomNo: String,
+
+    @Column(nullable = false)
     val birthDate: String,
 
     /** "male", "female", "other", "unknown" */

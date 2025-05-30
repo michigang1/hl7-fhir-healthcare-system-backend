@@ -20,6 +20,8 @@ repositories {
     google()
 }
 
+
+
 extra["springModulithVersion"] = "1.3.4"
 
 dependencies {
@@ -58,11 +60,16 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.5")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.11.5")
 
+    implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:2.1.0")
+
+
     implementation("com.google.fhir:r4:0.6.1")
     // Для JSON-парсера/принтера protobuf
     implementation("com.google.protobuf:protobuf-java-util:3.24.0")
     // (по желанию) kotlinx-serialization для DTO
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
+
+    implementation("ch.qos.logback:logback-classic")
 
 
 }

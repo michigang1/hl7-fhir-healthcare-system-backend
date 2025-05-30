@@ -4,6 +4,7 @@ data class PatientResponse (
     val id: Long?,
     val name: String?,
     val surname: String?,
+    val roomNo: String?,
     val dateOfBirth: String?,
     val gender: String?,
     val address: String?,
