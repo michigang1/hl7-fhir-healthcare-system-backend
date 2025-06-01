@@ -3,148 +3,143 @@ package michigang1.healthcare.backend.domain.careplan.service
 import jakarta.transaction.Transactional
 import michigang1.healthcare.backend.domain.careplan.model.Goal
 import michigang1.healthcare.backend.domain.careplan.model.Measure
-import michigang1.healthcare.backend.domain.careplan.payload.CarePlanMapper
-import michigang1.healthcare.backend.domain.careplan.payload.CarePlanRequest
-import michigang1.healthcare.backend.domain.careplan.payload.CarePlanResponse
-import michigang1.healthcare.backend.domain.careplan.repository.CarePlanRepository
+import michigang1.healthcare.backend.domain.careplan.payload.GoalDto
+import michigang1.healthcare.backend.domain.careplan.payload.GoalMapper
+import michigang1.healthcare.backend.domain.careplan.payload.MeasureDto
+import michigang1.healthcare.backend.domain.careplan.payload.MeasureMapper
 import michigang1.healthcare.backend.domain.careplan.repository.GoalRepository
-import michigang1.healthcare.backend.domain.careplan.repository.GoalTemplateRepository
 import michigang1.healthcare.backend.domain.careplan.repository.MeasureRepository
-import michigang1.healthcare.backend.domain.careplan.repository.MeasureTemplateRepository
 import michigang1.healthcare.backend.domain.patient.repository.PatientRepository
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Mono
 import reactor.core.scheduler.Schedulers
-import java.util.NoSuchElementException
 
 @Service
 class CarePlanServiceImpl(
-    private val carePlanRepository: CarePlanRepository,
-    private val measureRepository: MeasureRepository,
     private val goalRepository: GoalRepository,
-    private val measureTemplateRepository: MeasureTemplateRepository,
-    private val goalTemplateRepository: GoalTemplateRepository,
+    private val measureRepository: MeasureRepository,
     private val patientRepository: PatientRepository
-) : CarePlanService {
+): CarePlanService {
 
-    override fun getAll(): Mono<List<CarePlanResponse>> {
-        return Mono.fromCallable {
-            carePlanRepository.findAll().map { CarePlanMapper.toResponse(it) }
-        }.subscribeOn(Schedulers.boundedElastic())
-    }
-
-    override fun getById(id: Long): Mono<CarePlanResponse?> {
-        return Mono.fromCallable {
-            val carePlan = carePlanRepository.findById(id).orElse(null)
-            carePlan?.let { CarePlanMapper.toResponse(it) }
-        }.subscribeOn(Schedulers.boundedElastic())
-    }
-
-    override fun getByPatientId(patientId: Long): Mono<List<CarePlanResponse>> {
-        return Mono.fromCallable {
-            carePlanRepository.findByPatientId(patientId).map { CarePlanMapper.toResponse(it) }
-        }.subscribeOn(Schedulers.boundedElastic())
+    @Transactional
+    override fun getCarePlanByPatientId(patientId: Long): Mono<List<MeasureDto>> {
+      return Mono.fromCallable {
+            measureRepository.findAllWithGoalByPatientId(patientId).map { MeasureMapper.toDto(it) }
+      }.subscribeOn(Schedulers.boundedElastic())
     }
 
     @Transactional
-    override fun createCarePlan(carePlanRequest: CarePlanRequest): Mono<CarePlanResponse> {
-        return Mono.fromCallable {
-            // Get patient
-            val patient = patientRepository.findById(carePlanRequest.patientId ?: 
-                throw IllegalArgumentException("Patient ID is required"))
-                .orElseThrow { NoSuchElementException("Patient not found") }!!
-
-            // Get or create measure
-            val measure = if (carePlanRequest.measureId != null) {
-                measureRepository.findById(carePlanRequest.measureId)
-                    .orElseThrow { NoSuchElementException("Measure not found") }!!
-            } else if (carePlanRequest.measureName != null && carePlanRequest.measureDescription != null) {
-                // Create new measure
-                val template = carePlanRequest.measureTemplateId?.let {
-                    measureTemplateRepository.findById(it)
-                        .orElseThrow { NoSuchElementException("Measure template not found") }!!
-                }
-
-                val newMeasure = Measure(
-                    name = carePlanRequest.measureName,
-                    description = carePlanRequest.measureDescription,
-                    template = template
+    override fun createGoal(goalDto: GoalDto): Mono<GoalDto> {
+      return Mono.fromCallable {
+            val patient = patientRepository.findById(goalDto.patientId).orElseThrow()
+            val goal = goalRepository.save(
+                Goal(
+                    name = goalDto.name,
+                    description = goalDto.description,
+                    patient = patient!!
+                ))
+            GoalMapper.toDto(goal)
+        }.subscribeOn(Schedulers.boundedElastic())
+    }
+    @Transactional
+    override fun createMeasure(
+        goalId: Long,
+        dto: MeasureDto
+    ): Mono<MeasureDto> {
+       return Mono.fromCallable {
+            val goal = goalRepository.findById(goalId).orElseThrow()
+            val measure = measureRepository.save(
+                Measure(
+                    name = dto.name,
+                    description = dto.description,
+                    scheduledDateTime = dto.scheduledDateTime,
+                    isCompleted = dto.isCompleted,
+                    goal = goal
                 )
-                measureRepository.save(newMeasure)
-            } else {
-                throw IllegalArgumentException("Either measure ID or measure details (name and description) are required")
-            }
-
-            // Get or create goal
-            val goal = if (carePlanRequest.goalId != null) {
-                goalRepository.findById(carePlanRequest.goalId)
-                    .orElseThrow { NoSuchElementException("Goal not found") }!!
-            } else if (carePlanRequest.goalName != null && carePlanRequest.goalDescription != null &&
-                carePlanRequest.goalDuration != null && carePlanRequest.goalFrequency != null) {
-                // Create new goal
-                val template = carePlanRequest.goalTemplateId?.let {
-                    goalTemplateRepository.findById(it)
-                        .orElseThrow { NoSuchElementException("Goal template not found") }!!
-                }
-
-                val newGoal = Goal(
-                    name = carePlanRequest.goalName,
-                    description = carePlanRequest.goalDescription,
-                    duration = carePlanRequest.goalDuration,
-                    frequency = carePlanRequest.goalFrequency,
-                    template = template
-                )
-                goalRepository.save(newGoal)
-            } else {
-                throw IllegalArgumentException("Either goal ID or goal details (name, description, duration, frequency) are required")
-            }
-
-            // Create care plan
-            val carePlan = CarePlanMapper.toEntity(carePlanRequest, patient, measure, goal)
-            val savedCarePlan = carePlanRepository.save(carePlan)
-
-            CarePlanMapper.toResponse(savedCarePlan)
+            )
+            MeasureMapper.toDto(measure)
         }.subscribeOn(Schedulers.boundedElastic())
     }
 
+    override fun deleteGoal(goalId: Long): Mono<Unit> {
+        return Mono.fromCallable { goalRepository.deleteById(goalId) }.subscribeOn(Schedulers.boundedElastic())
+    }
     @Transactional
-    override fun updateCarePlan(id: Long, carePlanRequest: CarePlanRequest): Mono<CarePlanResponse?> {
+    override fun deleteMeasure(
+        goalId: Long,
+        measureId: Long
+    ): Mono<Unit> {
         return Mono.fromCallable {
-            val existingCarePlan = carePlanRepository.findById(id)
-                .orElseThrow { NoSuchElementException("Care plan not found") }!!
-
-            // Update measure if needed
-            val measure = if (carePlanRequest.measureId != null && carePlanRequest.measureId != existingCarePlan.measure.id) {
-                measureRepository.findById(carePlanRequest.measureId)
-                    .orElseThrow { NoSuchElementException("Measure not found") }!!
-            } else {
-                null
-            }
-
-            // Update goal if needed
-            val goal = if (carePlanRequest.goalId != null && carePlanRequest.goalId != existingCarePlan.goal.id) {
-                goalRepository.findById(carePlanRequest.goalId)
-                    .orElseThrow { NoSuchElementException("Goal not found") }!!
-            } else {
-                null
-            }
-
-            // Update care plan
-            val updatedCarePlan = CarePlanMapper.updateEntity(existingCarePlan, carePlanRequest, measure, goal)
-            val savedCarePlan = carePlanRepository.save(updatedCarePlan)
-
-            CarePlanMapper.toResponse(savedCarePlan)
+            goalRepository.findById(goalId).orElseThrow()
+            measureRepository.findById(measureId).orElseThrow()
+            measureRepository.deleteById(measureId)
         }.subscribeOn(Schedulers.boundedElastic())
     }
 
     @Transactional
-    override fun deleteCarePlan(id: Long): Boolean {
-        val carePlan = carePlanRepository.findById(id).orElseThrow {
-            NoSuchElementException("Care plan with ID $id not found")
-        }!!
+    override fun updateGoal(
+        goalId: Long,
+        goalDto: GoalDto
+    ): Mono<GoalDto> {
+        return Mono.fromCallable {
+            val existingGoal = goalRepository.findById(goalId).orElseThrow()
+            val updatedGoal = existingGoal.copy(
+                name = goalDto.name,
+                description = goalDto.description
+            )
+            goalRepository.save(updatedGoal)
+            GoalMapper.toDto(updatedGoal)
+        }
+    }
 
-        carePlanRepository.delete(carePlan)
+    @Transactional
+    override fun updateMeasure(
+        goalId: Long,
+        measureId: Long,
+        measureDto: MeasureDto
+    ): Mono<MeasureDto> {
+        return Mono.fromCallable {
+            val existingGoal = goalRepository.findById(goalId).orElseThrow()
+            val existingMeasure = measureRepository.findById(measureId).orElseThrow()
+            val updatedMeasure = existingMeasure.copy(
+                name = measureDto.name,
+                description = measureDto.description,
+                scheduledDateTime = measureDto.scheduledDateTime,
+                isCompleted = measureDto.isCompleted,
+                goal = measureDto.goalId.let { existingGoal } ?: existingMeasure.goal
+            )
+            measureRepository.save(updatedMeasure)
+            MeasureMapper.toDto(updatedMeasure)
+        }.subscribeOn(Schedulers.boundedElastic())
+    }
 
-        return !carePlanRepository.existsById(id)
+    @Transactional
+    override fun getGoalById(
+        goalId: Long
+    ): Mono<GoalDto?> {
+        return Mono.fromCallable {
+            goalRepository.findById(goalId).orElseThrow()
+                .let { GoalMapper.toDto(it) }
+        }.subscribeOn(Schedulers.boundedElastic())
+    }
+
+    @Transactional
+    override fun getMeasureById(
+        goalId: Long,
+        measureId: Long
+    ): Mono<MeasureDto?> {
+        return Mono.fromCallable {
+            goalRepository.findById(goalId).orElseThrow()
+            measureRepository.findById(measureId).orElseThrow()
+                .let { MeasureMapper.toDto(it) }
+        }.subscribeOn(Schedulers.boundedElastic())
+    }
+
+    @Transactional
+    override fun getAllGoalsByPatient(patientId: Long): Mono<List<GoalDto>> {
+       return Mono.fromCallable {
+           goalRepository.findAllByPatientId(patientId)
+               .map { GoalMapper.toDto(it) }
+       }.subscribeOn(Schedulers.boundedElastic())
     }
 }

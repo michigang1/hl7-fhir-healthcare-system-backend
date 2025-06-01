@@ -1,6 +1,10 @@
 package michigang1.healthcare.backend.domain.careplan.model
 
 import jakarta.persistence.*
+import java.time.LocalDateTime
+
+// Patient — предполагается, что у тебя уже есть эта сущность
+
 
 @Entity
 @Table(name = "measures")
@@ -14,27 +18,13 @@ data class Measure(
     @Column(nullable = false)
     val description: String,
 
+    @Column(nullable = false)
+    val scheduledDateTime: LocalDateTime,
+
+    @Column(nullable = false)
+    val isCompleted: Boolean = false,
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "template_id", nullable = true)
-    val template: MeasureTemplate? = null
-) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as Measure
-
-        if (id != other.id) return false
-        if (name != other.name) return false
-        if (description != other.description) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = id.hashCode()
-        result = 31 * result + name.hashCode()
-        result = 31 * result + description.hashCode()
-        return result
-    }
-}
+    @JoinColumn(name = "goal_id", nullable = false)
+    val goal: Goal
+)
