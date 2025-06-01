@@ -20,47 +20,28 @@ class DiagnosisServiceImp(
     private val patientMapper: PatientMapper,
     private val patientService: PatientService,
 ): DiagnosisService {
+
     override fun getAllDiagnoses(): Flux<List<DiagnosisResponse>> {
-        return Flux.just(diagnosisRepository.findAll().map {
-            DiagnosisResponse(
-                id = it.id,
-                patientId = it.patient.id,
-                code = it.code,
-                isPrimary = it.isPrimary,
-                description = it.description,
-                diagnosedAt = it.diagnosedAt,
-                diagnosedBy = it.diagnosedBy
-            )
-        })
+        return Mono.fromCallable { diagnosisRepository.findAll() }
+            .subscribeOn(Schedulers.boundedElastic())
+            .map { diagnosis ->
+                diagnosis.map { diagnosisMapper.toResponse(it) }
+            }
+            .flux()
     }
 
     override fun getAllDiagnosesByPatient(patientId: Long): Flux<List<DiagnosisResponse>> {
-        return Flux.just(diagnosisRepository.findByPatientId(patientId).map {
-            DiagnosisResponse(
-                id = it.id,
-                patientId = it.patient.id,
-                code = it.code,
-                isPrimary = it.isPrimary,
-                description = it.description,
-                diagnosedAt = it.diagnosedAt,
-                diagnosedBy = it.diagnosedBy
-            )
-        })
+        return Mono.fromCallable { diagnosisRepository.findByPatientId(patientId) }
+            .subscribeOn(Schedulers.boundedElastic())
+            .map { diagnosis ->
+                diagnosis.map { diagnosisMapper.toResponse(it) }
+            }
+            .flux()
     }
 
     override fun getDiagnosisByPatient(patientId: Long, id: Long): Mono<DiagnosisResponse?> {
         return Mono.fromCallable { diagnosisRepository.findByPatientIdAndId(patientId, id) ?: throw NoSuchElementException("Diagnosis not found") }
-            .map {
-                    DiagnosisResponse(
-                        id = it.id,
-                        patientId = it.patient.id,
-                        code = it.code,
-                        isPrimary = it.isPrimary,
-                        description = it.description,
-                        diagnosedAt = it.diagnosedAt,
-                        diagnosedBy = it.diagnosedBy
-                    )
-            }
+            .map { diagnosisMapper.toResponse(it) }
     }
 
     @Transactional

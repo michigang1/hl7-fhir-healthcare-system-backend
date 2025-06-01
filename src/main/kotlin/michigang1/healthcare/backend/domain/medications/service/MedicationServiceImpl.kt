@@ -21,17 +21,24 @@ class MedicationServiceImp(
     private val patientService: PatientService,
     private val patientMapper: PatientMapper
 ) : MedicationService {
-    override fun getAllMedications(): Flux<List<MedicationResponse>> =
-        Flux.just(
-            medicationRepository.findAll()
-                .map { medicationMapper.toResponse(it) }
-        )
+    override fun getAllMedications(): Flux<List<MedicationResponse>> {
+        return Mono.fromCallable { medicationRepository.findAll() }
+            .subscribeOn(Schedulers.boundedElastic())
+            .map { medications ->
+                medications.map { medicationMapper.toResponse(it) }
+            }
+            .flux()
+    }
 
-    override fun getAllByPatient(patientId: Long): Flux<List<MedicationResponse>> =
-        Flux.just(
-            medicationRepository.findByPatientId(patientId)
-                .map { medicationMapper.toResponse(it) }
-        )
+    override fun getAllByPatient(patientId: Long): Flux<List<MedicationResponse>> {
+        return Mono.fromCallable { medicationRepository.findByPatientId(patientId) }
+            .subscribeOn(Schedulers.boundedElastic())
+            .map { medications ->
+                medications.map { medicationMapper.toResponse(it) }
+            }
+            .flux()
+    }
+
 
     override fun getMedicationByPatient(patientId: Long, id: Long): Mono<MedicationResponse> =
         Mono.fromCallable {

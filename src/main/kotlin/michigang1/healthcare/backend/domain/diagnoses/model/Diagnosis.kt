@@ -29,4 +29,30 @@ data class Diagnosis(
 
     @Column(nullable = false, length = 30)
     val diagnosedBy: String
-)
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as Diagnosis
+
+        if (id != other.id) return false
+        if (code != other.code) return false
+        if (isPrimary != other.isPrimary) return false
+        if (description != other.description) return false
+        if (diagnosedAt != other.diagnosedAt) return false
+        if (diagnosedBy != other.diagnosedBy) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = id.hashCode()
+        result = 31 * result + code.hashCode()
+        result = 31 * result + isPrimary.hashCode()
+        result = 31 * result + description.hashCode()
+        result = 31 * result + diagnosedAt.hashCode()
+        result = 31 * result + diagnosedBy.hashCode()
+        return result
+    }
+}

@@ -11,6 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
+import reactor.kotlin.core.publisher.toFlux
 
 @RestController
 @RequestMapping("/api/v1")
@@ -18,13 +19,19 @@ class MedicationController(
     private val medicationService: MedicationService
 ) {
     @GetMapping("/medications")
-    fun getAllMedications(): Flux<List<MedicationResponse>> =
+    fun getAllMedications(): Mono<ResponseEntity<List<MedicationResponse>>> =
         medicationService.getAllMedications()
+            .flatMapIterable { it }
+            .collectList()
+            .map { ResponseEntity.ok(it) }
 
     @GetMapping("/patients/{patientId}/medications")
     @PreAuthorize("hasRole('DOCTOR') or hasRole('NURSE') or hasRole('SOCIAL_WORKER') or hasRole('ORGANISATION_ADMIN') or hasRole('ADMIN')")
-    fun getAllByPatient(@PathVariable patientId: Long): Flux<List<MedicationResponse>> =
+    fun getAllByPatient(@PathVariable patientId: Long): Mono<ResponseEntity<List<MedicationResponse>>> =
         medicationService.getAllByPatient(patientId)
+            .flatMapIterable { it }
+            .collectList()
+            .map { ResponseEntity.ok(it) }
 
     @GetMapping("/patients/{patientId}/medications/{id}")
     @PreAuthorize("hasRole('DOCTOR') or hasRole('NURSE') or hasRole('SOCIAL_WORKER') or hasRole('ORGANISATION_ADMIN') or hasRole('ADMIN')")

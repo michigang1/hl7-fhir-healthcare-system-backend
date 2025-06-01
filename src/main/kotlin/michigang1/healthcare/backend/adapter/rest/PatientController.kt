@@ -23,8 +23,11 @@ class PatientController(
     @PreAuthorize("hasRole('ADMIN') or" +
                   " hasRole('ORGANISATION_ADMIN') or hasRole('DOCTOR') or" +
                   " hasRole('NURSE') or hasRole('SOCIAL_WORKER')")
-    fun getAllPatients(): Flux<List<PatientResponse>> =
+    fun getAllPatients(): Mono<ResponseEntity<List<PatientResponse>>> =
         patientService.getAll()
+            .flatMapIterable { it }
+            .collectList()
+            .map { ResponseEntity.ok(it) }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or" +
