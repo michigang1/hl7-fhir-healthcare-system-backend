@@ -18,55 +18,95 @@ class CarePlanController(
 ) {
 
     @GetMapping
-    fun getCarePlanByPatientId(@PathVariable patientId: Long): ResponseEntity<Mono<List<MeasureDto>>> =
-        ResponseEntity.ok(carePlanService.getCarePlanByPatientId(patientId))
+    @PreAuthorize("hasRole('ADMIN') or" +
+            " hasRole('ORGANISATION_ADMIN') or hasRole('DOCTOR') or" +
+            " hasRole('NURSE') or hasRole('SOCIAL_WORKER')")
+    fun getCarePlanByPatientId(@PathVariable patientId: Long): Mono<ResponseEntity<List<MeasureDto>>> =
+        carePlanService.getCarePlanByPatientId(patientId)
+            .map { ResponseEntity.ok(it) }
 
     @PostMapping("/goals")
-    fun createGoal(@RequestBody goalDto: GoalDto): ResponseEntity<Mono<GoalDto>> =
-        ResponseEntity.ok(carePlanService.createGoal(goalDto))
+    @PreAuthorize("hasRole('ADMIN') or" +
+            " hasRole('ORGANISATION_ADMIN') or hasRole('DOCTOR') or" +
+            " hasRole('NURSE')")
+    fun createGoal(@RequestBody goalDto: GoalDto): Mono<ResponseEntity<GoalDto>> =
+        carePlanService.createGoal(goalDto)
+            .map { ResponseEntity.ok(it) }
 
     @PostMapping("/goals/{goalId}/measures")
+    @PreAuthorize("hasRole('ADMIN') or" +
+            " hasRole('ORGANISATION_ADMIN') or hasRole('DOCTOR') or" +
+            " hasRole('NURSE')")
     fun createMeasure(
         @PathVariable goalId: Long,
         @RequestBody measureDto: MeasureDto
-    ): ResponseEntity<Mono<MeasureDto>> =
-        ResponseEntity.ok(carePlanService.createMeasure(goalId, measureDto))
+    ): Mono<ResponseEntity<MeasureDto>> =
+        carePlanService.createMeasure(goalId, measureDto)
+            .map { ResponseEntity.ok(it) }
 
     @GetMapping("/goals/{goalId}")
-    fun getGoalById(@PathVariable goalId: Long): ResponseEntity<Mono<GoalDto?>> =
-        ResponseEntity.ok(carePlanService.getGoalById(goalId))
+    @PreAuthorize("hasRole('ADMIN') or" +
+            " hasRole('ORGANISATION_ADMIN') or hasRole('DOCTOR') or" +
+            " hasRole('NURSE') or hasRole('SOCIAL_WORKER')")
+    fun getGoalById(@PathVariable goalId: Long): Mono<ResponseEntity<GoalDto?>> =
+        carePlanService.getGoalById(goalId)
+            .map { ResponseEntity.ok(it) }
 
     @GetMapping("/goals/{goalId}/measures/{measureId}")
+    @PreAuthorize("hasRole('ADMIN') or" +
+            " hasRole('ORGANISATION_ADMIN') or hasRole('DOCTOR') or" +
+            " hasRole('NURSE') or hasRole('SOCIAL_WORKER')")
     fun getMeasureById(
         @PathVariable goalId: Long,
         @PathVariable measureId: Long
-    ): ResponseEntity<Mono<MeasureDto?>> =
-        ResponseEntity.ok(carePlanService.getMeasureById(goalId, measureId))
+    ): Mono<ResponseEntity<MeasureDto?>> =
+        carePlanService.getMeasureById(goalId, measureId)
+            .map { ResponseEntity.ok(it) }
 
     @PutMapping("/goals/{goalId}")
-    fun updateGoal(@PathVariable goalId: Long, @RequestBody goalDto: GoalDto): ResponseEntity<Mono<GoalDto>> =
-        ResponseEntity.ok(carePlanService.updateGoal(goalId, goalDto))
+    @PreAuthorize("hasRole('ADMIN') or" +
+            " hasRole('ORGANISATION_ADMIN') or hasRole('DOCTOR') or" +
+            " hasRole('NURSE')")
+    fun updateGoal(@PathVariable goalId: Long, @RequestBody goalDto: GoalDto): Mono<ResponseEntity<GoalDto>> =
+        carePlanService.updateGoal(goalId, goalDto)
+            .map { ResponseEntity.ok(it) }
 
     @PutMapping("/goals/{goalId}/measures/{measureId}")
+    @PreAuthorize("hasRole('ADMIN') or" +
+            " hasRole('ORGANISATION_ADMIN') or hasRole('DOCTOR') or" +
+            " hasRole('NURSE')")
     fun updateMeasure(
         @PathVariable goalId: Long,
         @PathVariable measureId: Long,
         @RequestBody measureDto: MeasureDto
-    ): ResponseEntity<Mono<MeasureDto>> =
-        ResponseEntity.ok(carePlanService.updateMeasure(goalId, measureId, measureDto))
+    ): Mono<ResponseEntity<MeasureDto>> =
+        carePlanService.updateMeasure(goalId, measureId, measureDto)
+            .map { ResponseEntity.ok(it) }
 
     @DeleteMapping("/goals/{goalId}")
-    fun deleteGoal(@PathVariable goalId: Long): ResponseEntity<Mono<Unit>> =
-        ResponseEntity.ok(carePlanService.deleteGoal(goalId))
+    @PreAuthorize("hasRole('ADMIN') or" +
+            " hasRole('ORGANISATION_ADMIN') or hasRole('DOCTOR') or" +
+            " hasRole('NURSE')")
+    fun deleteGoal(@PathVariable goalId: Long): Mono<ResponseEntity<Unit>> =
+        carePlanService.deleteGoal(goalId)
+            .map { ResponseEntity.ok(it) }
 
     @DeleteMapping("/goals/{goalId}/measures/{measureId}")
+    @PreAuthorize("hasRole('ADMIN') or" +
+            " hasRole('ORGANISATION_ADMIN') or hasRole('DOCTOR') or" +
+            " hasRole('NURSE')")
     fun deleteMeasure(
         @PathVariable goalId: Long,
         @PathVariable measureId: Long
-    ): ResponseEntity<Mono<Unit>> =
-        ResponseEntity.ok(carePlanService.deleteMeasure(goalId, measureId))
+    ): Mono<ResponseEntity<Unit>> =
+        carePlanService.deleteMeasure(goalId, measureId)
+            .map { ResponseEntity.ok(it) }
 
     @GetMapping("/goals")
-    fun getAllGoalsByPatient(@PathVariable patientId: Long): ResponseEntity<Mono<List<GoalDto>>> =
-        ResponseEntity.ok(carePlanService.getAllGoalsByPatient(patientId))
+    @PreAuthorize("hasRole('ADMIN') or" +
+            " hasRole('ORGANISATION_ADMIN') or hasRole('DOCTOR') or" +
+            " hasRole('NURSE') or hasRole('SOCIAL_WORKER')")
+    fun getAllGoalsByPatient(@PathVariable patientId: Long): Mono<ResponseEntity<List<GoalDto>>> =
+        carePlanService.getAllGoalsByPatient(patientId)
+            .map { ResponseEntity.ok(it) }
 }
