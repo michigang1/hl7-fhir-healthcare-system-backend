@@ -109,4 +109,5 @@ class CarePlanController(
     fun getAllGoalsByPatient(@PathVariable patientId: Long): Mono<ResponseEntity<List<GoalDto>>> =
         carePlanService.getAllGoalsByPatient(patientId)
             .map { ResponseEntity.ok(it) }
+
 }
