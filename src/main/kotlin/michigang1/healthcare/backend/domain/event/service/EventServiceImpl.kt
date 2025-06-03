@@ -23,7 +23,7 @@ class EventServiceImpl(
 ) : EventService {
 
     override fun getAllEvents(): Flux<List<EventResponse>> {
-        return Mono.fromCallable { eventRepository.findAll() }
+        return Mono.fromCallable { eventRepository.findAllWithAuthor() }
             .subscribeOn(Schedulers.boundedElastic())
             .map { events ->
                 events.map { eventMapper.toResponse(it) }
@@ -32,13 +32,13 @@ class EventServiceImpl(
     }
 
     override fun getEventById(id: Long): Mono<EventResponse?> {
-        return Mono.fromCallable { eventRepository.findById(id).orElse(null) }
+        return Mono.fromCallable { eventRepository.findByIdWithAuthor(id) }
             .subscribeOn(Schedulers.boundedElastic())
             .map { event -> event?.let { eventMapper.toResponse(it) } }
     }
 
     override fun getEventsByPatient(patientId: Long): Flux<List<EventResponse>> {
-        return Mono.fromCallable { eventRepository.findByPatientsId(patientId) }
+        return Mono.fromCallable { eventRepository.findByPatientsIdWithAuthor(patientId) }
             .subscribeOn(Schedulers.boundedElastic())
             .map { events ->
                 events.map { eventMapper.toResponse(it) }
