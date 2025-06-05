@@ -43,7 +43,7 @@ class MedicationController(
             .map { ResponseEntity.ok(it) }
             .defaultIfEmpty(ResponseEntity.notFound().build())
 
-    @PostMapping("/medications")
+    @PostMapping("/patients/{patientId}/medications")
     @PreAuthorize("hasRole('DOCTOR') or hasRole('NURSE') or hasRole('ADMIN')")
     fun create(
         @PathVariable patientId: Long,

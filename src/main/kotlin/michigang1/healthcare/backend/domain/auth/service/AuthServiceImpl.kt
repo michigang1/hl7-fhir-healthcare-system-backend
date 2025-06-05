@@ -34,23 +34,27 @@ class AuthServiceImpl(
     @Transactional
     override fun authenticate(request: LoginRequest): Mono<JwtResponse> =
         Mono.fromCallable {
-            userRepository.findByUsername(request.username) ?: throw BadCredentialsException("Invalid sign-in credentials")
+            userRepository.findByUsername(request.username)
         }
             .subscribeOn(Schedulers.boundedElastic())
-            .map { user ->
-                if (!passwordEncoder.matches(request.password, user.password)) throw BadCredentialsException("Invalid sign-in credentials")
+            .flatMap { user ->
+                if (user == null || !passwordEncoder.matches(request.password, user.password)) {
+                    return@flatMap Mono.error<JwtResponse>(BadCredentialsException("Invalid sign-in credentials"))
+                }
+
                 val authorities = user.roles.map { SimpleGrantedAuthority(it.name.name) }
                 val auth = UsernamePasswordAuthenticationToken(user.username, user.password, authorities)
                 val token = tokenProvider.generateToken(auth)
-                JwtResponse(
+
+                Mono.just(JwtResponse(
                     token       = token,
                     id          = user.id,
                     username    = user.username,
                     email       = user.email,
                     roles       = user.roles.map { it.name.name }
-                )
+                ))
             }
-            .doOnSuccess { auditLogger.loginSuccess(it.username) }
+            .doOnSuccess { it?.let { response -> auditLogger.loginSuccess(response.username) } }
             .doOnError { auditLogger.loginFailure(request.username) }
 
     @Transactional
@@ -87,4 +91,3 @@ class AuthServiceImpl(
             .doOnError { auditLogger.registerFailure(request.username) }
 
 }
-

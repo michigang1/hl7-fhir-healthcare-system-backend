@@ -1,6 +1,7 @@
 package michigang1.healthcare.backend.domain.diagnoses.service
 
 import jakarta.transaction.Transactional
+import michigang1.healthcare.backend.common.security.audit.AuditLogger
 import michigang1.healthcare.backend.domain.diagnoses.model.Diagnosis
 import michigang1.healthcare.backend.domain.diagnoses.payload.DiagnosisMapper
 import michigang1.healthcare.backend.domain.diagnoses.payload.request.DiagnosisRequest
@@ -19,14 +20,26 @@ class DiagnosisServiceImp(
     private val diagnosisMapper: DiagnosisMapper,
     private val patientMapper: PatientMapper,
     private val patientService: PatientService,
+    private val auditLogger: AuditLogger,
 ): DiagnosisService {
+    private val defaultUser = "system" // Default user for audit logging
 
     override fun getAllDiagnoses(): Flux<List<DiagnosisResponse>> {
         return Mono.fromCallable { diagnosisRepository.findAll() }
             .subscribeOn(Schedulers.boundedElastic())
             .map { diagnosis ->
-                diagnosis.map { diagnosisMapper.toResponse(it) }
+                val responses = diagnosis.map { diagnosisMapper.toResponse(it) }
+                // Log each diagnosis retrieval
+                responses.forEach { response ->
+                    response.id?.let { diagnosisId ->
+                        response.patientId?.let { patientId ->
+                            auditLogger.diagnosisRetrieved(diagnosisId, patientId, defaultUser)
+                        }
+                    }
+                }
+                responses
             }
+            .doOnError { auditLogger.diagnosisRetrievalFailed(defaultUser) }
             .flux()
     }
 
@@ -34,14 +47,28 @@ class DiagnosisServiceImp(
         return Mono.fromCallable { diagnosisRepository.findByPatientId(patientId) }
             .subscribeOn(Schedulers.boundedElastic())
             .map { diagnosis ->
-                diagnosis.map { diagnosisMapper.toResponse(it) }
+                val responses = diagnosis.map { diagnosisMapper.toResponse(it) }
+                // Log each diagnosis retrieval
+                responses.forEach { response ->
+                    response.id?.let { diagnosisId ->
+                        auditLogger.diagnosisRetrieved(diagnosisId, patientId, defaultUser)
+                    }
+                }
+                responses
             }
+            .doOnError { auditLogger.diagnosisRetrievalFailed(defaultUser) }
             .flux()
     }
 
     override fun getDiagnosisByPatient(patientId: Long, id: Long): Mono<DiagnosisResponse?> {
         return Mono.fromCallable { diagnosisRepository.findByPatientIdAndId(patientId, id) ?: throw NoSuchElementException("Diagnosis not found") }
             .map { diagnosisMapper.toResponse(it) }
+            .doOnSuccess { response -> 
+                response?.id?.let { diagnosisId -> 
+                    auditLogger.diagnosisRetrieved(diagnosisId, patientId, defaultUser) 
+                }
+            }
+            .doOnError { auditLogger.diagnosisRetrievalFailed(defaultUser) }
     }
 
     @Transactional
@@ -65,6 +92,12 @@ class DiagnosisServiceImp(
                     .subscribeOn(Schedulers.boundedElastic())
             }
             .map { diagnosisMapper.toResponse(it) }
+            .doOnSuccess { response -> 
+                response.id?.let { diagnosisId -> 
+                    auditLogger.diagnosisCreated(diagnosisId, patientId, defaultUser) 
+                }
+            }
+            .doOnError { auditLogger.diagnosisCreationFailed(defaultUser) }
     }
 
     override fun updateDiagnosis(
@@ -90,6 +123,12 @@ class DiagnosisServiceImp(
         }
             .subscribeOn(Schedulers.boundedElastic())
             .map { diagnosisMapper.toResponse(it) }
+            .doOnSuccess { response -> 
+                response?.id?.let { diagnosisId -> 
+                    auditLogger.diagnosisUpdated(diagnosisId, patientId, defaultUser) 
+                }
+            }
+            .doOnError { auditLogger.diagnosisUpdateFailed(id, patientId, defaultUser) }
     }
 
     override fun deleteDiagnosis(patientId: Long, id: Long): Mono<Boolean> {
@@ -100,5 +139,11 @@ class DiagnosisServiceImp(
             true
         }
             .subscribeOn(Schedulers.boundedElastic())
+            .doOnSuccess { success -> 
+                if (success) {
+                    auditLogger.diagnosisDeleted(id, patientId, defaultUser)
+                }
+            }
+            .doOnError { auditLogger.diagnosisDeletionFailed(id, patientId, defaultUser) }
     }
 }

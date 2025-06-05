@@ -1,6 +1,7 @@
 package michigang1.healthcare.backend.domain.event.service
 
 import jakarta.transaction.Transactional
+import michigang1.healthcare.backend.common.security.audit.AuditLogger
 import michigang1.healthcare.backend.domain.auth.repository.UserRepository
 import michigang1.healthcare.backend.domain.event.model.Event
 import michigang1.healthcare.backend.domain.event.payload.EventMapper
@@ -19,15 +20,25 @@ class EventServiceImpl(
     private val eventRepository: EventRepository,
     private val eventMapper: EventMapper,
     private val userRepository: UserRepository,
-    private val patientRepository: PatientRepository
+    private val patientRepository: PatientRepository,
+    private val auditLogger: AuditLogger
 ) : EventService {
+    private val defaultUser = "system" // Default user for audit logging
 
     override fun getAllEvents(): Flux<List<EventResponse>> {
         return Mono.fromCallable { eventRepository.findAllWithAuthor() }
             .subscribeOn(Schedulers.boundedElastic())
             .map { events ->
-                events.map { eventMapper.toResponse(it) }
+                val responses = events.map { eventMapper.toResponse(it) }
+                // Log each event retrieval
+                responses.forEach { response ->
+                    response.id?.let { eventId ->
+                        auditLogger.eventRetrieved(eventId, defaultUser)
+                    }
+                }
+                responses
             }
+            .doOnError { auditLogger.eventRetrievalFailed(defaultUser) }
             .flux()
     }
 
@@ -35,14 +46,28 @@ class EventServiceImpl(
         return Mono.fromCallable { eventRepository.findByIdWithAuthor(id) }
             .subscribeOn(Schedulers.boundedElastic())
             .map { event -> event?.let { eventMapper.toResponse(it) } }
+            .doOnSuccess { response -> 
+                response?.id?.let { eventId -> 
+                    auditLogger.eventRetrieved(eventId, defaultUser) 
+                }
+            }
+            .doOnError { auditLogger.eventRetrievalFailed(defaultUser) }
     }
 
     override fun getEventsByPatient(patientId: Long): Flux<List<EventResponse>> {
         return Mono.fromCallable { eventRepository.findByPatientsIdWithAuthor(patientId) }
             .subscribeOn(Schedulers.boundedElastic())
             .map { events ->
-                events.map { eventMapper.toResponse(it) }
+                val responses = events.map { eventMapper.toResponse(it) }
+                // Log each event retrieval
+                responses.forEach { response ->
+                    response.id?.let { eventId ->
+                        auditLogger.eventRetrieved(eventId, defaultUser)
+                    }
+                }
+                responses
             }
+            .doOnError { auditLogger.eventRetrievalFailed(defaultUser) }
             .flux()
     }
 
@@ -66,6 +91,12 @@ class EventServiceImpl(
         }
         .subscribeOn(Schedulers.boundedElastic())
         .map { eventMapper.toResponse(it) }
+        .doOnSuccess { response -> 
+            response.id?.let { eventId -> 
+                auditLogger.eventCreated(eventId, defaultUser) 
+            }
+        }
+        .doOnError { auditLogger.eventCreationFailed(defaultUser) }
     }
 
     @Transactional
@@ -98,6 +129,12 @@ class EventServiceImpl(
         }
         .subscribeOn(Schedulers.boundedElastic())
         .map { eventMapper.toResponse(it) }
+        .doOnSuccess { response -> 
+            response?.id?.let { eventId -> 
+                auditLogger.eventUpdated(eventId, defaultUser) 
+            }
+        }
+        .doOnError { auditLogger.eventUpdateFailed(id, defaultUser) }
     }
 
     @Transactional
@@ -108,5 +145,11 @@ class EventServiceImpl(
             true
         }
         .subscribeOn(Schedulers.boundedElastic())
+        .doOnSuccess { success -> 
+            if (success) {
+                auditLogger.eventDeleted(id, defaultUser)
+            }
+        }
+        .doOnError { auditLogger.eventDeletionFailed(id, defaultUser) }
     }
 }

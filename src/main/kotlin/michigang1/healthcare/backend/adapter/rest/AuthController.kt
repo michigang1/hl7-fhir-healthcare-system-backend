@@ -30,7 +30,7 @@ class AuthController(private val authService: AuthService,
         authService.register(request)
             .map { ResponseEntity.ok(it) }
 
-    @GetMapping ("/actuator/auditevents")
+    @GetMapping ("/api/v1/actuator/auditevents")
     fun audit(): ResponseEntity<MutableList<AuditEvent>> {
        val response = auditConfig.auditEventRepository(auditEventRepository).find(null, null, null)
        return ResponseEntity.ok(response)

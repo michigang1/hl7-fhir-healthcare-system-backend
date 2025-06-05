@@ -1,6 +1,7 @@
 package michigang1.healthcare.backend.domain.patient.service
 
 import jakarta.transaction.Transactional
+import michigang1.healthcare.backend.common.security.audit.AuditLogger
 import michigang1.healthcare.backend.domain.organization.service.OrganizationService
 import michigang1.healthcare.backend.domain.patient.payload.PatientRequest
 import michigang1.healthcare.backend.domain.patient.payload.PatientResponse
@@ -15,7 +16,9 @@ import reactor.core.scheduler.Schedulers
 class PatientServiceImpl(
     private val patientRepository: PatientRepository,
     private val organizationService: OrganizationService,
+    private val auditLogger: AuditLogger,
 ): PatientService {
+    private val defaultUser = "system" // Default user for audit logging
     override fun getAll(): Flux<List<PatientResponse>> {
         return Mono.fromCallable { patientRepository.findAll() }
             .subscribeOn(Schedulers.boundedElastic())
@@ -56,7 +59,14 @@ class PatientServiceImpl(
                 identifier = patient?.identifier,
                 organizationId = patient?.organizationId,
             )
-        }.subscribeOn(Schedulers.boundedElastic())
+        }
+        .subscribeOn(Schedulers.boundedElastic())
+        .doOnSuccess { response -> 
+            response?.id?.let { patientId -> 
+                auditLogger.patientRetrieved(patientId, defaultUser) 
+            }
+        }
+        .doOnError { auditLogger.patientRetrievalFailed(defaultUser) }
     }
 
     override fun getByFirstName(name: String): Mono<PatientResponse?> {
@@ -239,6 +249,12 @@ class PatientServiceImpl(
                         organizationId = savedPatient.organizationId
                     )
                 }.subscribeOn(Schedulers.boundedElastic())
+                .doOnSuccess { response -> 
+                    response.id?.let { patientId -> 
+                        auditLogger.patientCreated(patientId, defaultUser) 
+                    }
+                }
+                .doOnError { auditLogger.patientCreationFailed(defaultUser) }
             }
     }
 
@@ -274,18 +290,37 @@ class PatientServiceImpl(
                 identifier = savedPatient.identifier,
                 organizationId = savedPatient.organizationId
             )
-        }.subscribeOn(Schedulers.boundedElastic())
+        }
+        .subscribeOn(Schedulers.boundedElastic())
+        .doOnSuccess { response -> 
+            response?.id?.let { patientId -> 
+                auditLogger.patientUpdated(patientId, defaultUser) 
+            }
+        }
+        .doOnError { auditLogger.patientUpdateFailed(id, defaultUser) }
     }
 
     @Transactional
     override fun deletePatient(id: Long): Boolean {
-        val patient = patientRepository.findById(id).orElseThrow {
-            NoSuchElementException("Patient with ID $id not found")
+        try {
+            val patient = patientRepository.findById(id).orElseThrow {
+                NoSuchElementException("Patient with ID $id not found")
+            }
+
+            patientRepository.delete(patient!!)
+
+            val deleted = !patientRepository.existsById(id)
+            if (deleted) {
+                auditLogger.patientDeleted(id, defaultUser)
+            } else {
+                auditLogger.patientDeletionFailed(id, defaultUser)
+            }
+
+            return deleted
+        } catch (e: Exception) {
+            auditLogger.patientDeletionFailed(id, defaultUser)
+            throw e
         }
-
-        patientRepository.delete(patient!!)
-
-        return !patientRepository.existsById(id)
     }
 
 }

@@ -50,7 +50,7 @@ class SecurityConfig(
                     .pathMatchers("/api/v1/user/**").authenticated()
                     .pathMatchers("/api/v1/health").permitAll()
                     .pathMatchers("/api/v1/health/**").permitAll()
-                    .pathMatchers("/actuator/**").authenticated()
+                    .pathMatchers("/api/v1/actuator/**").authenticated()
                     .pathMatchers("/api/v1/patients", "/api/v1/patients/**").authenticated()
                     .anyExchange().authenticated()
 

@@ -1,6 +1,7 @@
 package michigang1.healthcare.backend.domain.careplan.service
 
 import jakarta.transaction.Transactional
+import michigang1.healthcare.backend.common.security.audit.AuditLogger
 import michigang1.healthcare.backend.domain.careplan.model.Goal
 import michigang1.healthcare.backend.domain.careplan.model.Measure
 import michigang1.healthcare.backend.domain.careplan.payload.GoalDto
@@ -18,14 +19,23 @@ import reactor.core.scheduler.Schedulers
 class CarePlanServiceImpl(
     private val goalRepository: GoalRepository,
     private val measureRepository: MeasureRepository,
-    private val patientRepository: PatientRepository
+    private val patientRepository: PatientRepository,
+    private val auditLogger: AuditLogger
 ): CarePlanService {
+    private val defaultUser = "system" // Default user for audit logging
 
     @Transactional
     override fun getCarePlanByPatientId(patientId: Long): Mono<List<MeasureDto>> {
       return Mono.fromCallable {
             measureRepository.findAllWithGoalByPatientId(patientId).map { MeasureMapper.toDto(it) }
-      }.subscribeOn(Schedulers.boundedElastic())
+      }
+      .subscribeOn(Schedulers.boundedElastic())
+      .doOnSuccess { 
+          auditLogger.carePlanRetrieved(patientId, defaultUser)
+      }
+      .doOnError { 
+          auditLogger.carePlanRetrievalFailed(defaultUser)
+      }
     }
 
     @Transactional
@@ -39,7 +49,14 @@ class CarePlanServiceImpl(
                     patient = patient!!
                 ))
             GoalMapper.toDto(goal)
-        }.subscribeOn(Schedulers.boundedElastic())
+        }
+        .subscribeOn(Schedulers.boundedElastic())
+        .doOnSuccess { response -> 
+            response.id?.let { goalId -> 
+                auditLogger.carePlanGoalCreated(goalId, defaultUser) 
+            }
+        }
+        .doOnError { auditLogger.carePlanGoalCreationFailed(defaultUser) }
     }
     @Transactional
     override fun createMeasure(
@@ -58,11 +75,27 @@ class CarePlanServiceImpl(
                 )
             )
             MeasureMapper.toDto(measure)
-        }.subscribeOn(Schedulers.boundedElastic())
+        }
+        .subscribeOn(Schedulers.boundedElastic())
+        .doOnSuccess { response -> 
+            response.id?.let { measureId -> 
+                auditLogger.carePlanMeasureCreated(goalId, measureId, defaultUser) 
+            }
+        }
+        .doOnError { auditLogger.carePlanMeasureCreationFailed(goalId, defaultUser) }
     }
 
     override fun deleteGoal(goalId: Long): Mono<Unit> {
-        return Mono.fromCallable { goalRepository.deleteById(goalId) }.subscribeOn(Schedulers.boundedElastic())
+        return Mono.fromCallable { 
+            goalRepository.deleteById(goalId) 
+        }
+        .subscribeOn(Schedulers.boundedElastic())
+        .doOnSuccess { 
+            auditLogger.carePlanGoalDeleted(goalId, defaultUser)
+        }
+        .doOnError { 
+            auditLogger.carePlanGoalDeletionFailed(goalId, defaultUser)
+        }
     }
     @Transactional
     override fun deleteMeasure(
@@ -73,7 +106,14 @@ class CarePlanServiceImpl(
             goalRepository.findById(goalId).orElseThrow()
             measureRepository.findById(measureId).orElseThrow()
             measureRepository.deleteById(measureId)
-        }.subscribeOn(Schedulers.boundedElastic())
+        }
+        .subscribeOn(Schedulers.boundedElastic())
+        .doOnSuccess { 
+            auditLogger.carePlanMeasureDeleted(goalId, measureId, defaultUser)
+        }
+        .doOnError { 
+            auditLogger.carePlanMeasureDeletionFailed(goalId, measureId, defaultUser)
+        }
     }
 
     @Transactional
@@ -90,6 +130,13 @@ class CarePlanServiceImpl(
             goalRepository.save(updatedGoal)
             GoalMapper.toDto(updatedGoal)
         }
+        .subscribeOn(Schedulers.boundedElastic())
+        .doOnSuccess { response -> 
+            response.id?.let { goalId -> 
+                auditLogger.carePlanGoalUpdated(goalId, defaultUser) 
+            }
+        }
+        .doOnError { auditLogger.carePlanGoalUpdateFailed(goalId, defaultUser) }
     }
 
     @Transactional
@@ -110,7 +157,14 @@ class CarePlanServiceImpl(
             )
             measureRepository.save(updatedMeasure)
             MeasureMapper.toDto(updatedMeasure)
-        }.subscribeOn(Schedulers.boundedElastic())
+        }
+        .subscribeOn(Schedulers.boundedElastic())
+        .doOnSuccess { response -> 
+            response.id?.let { measureId -> 
+                auditLogger.carePlanMeasureUpdated(goalId, measureId, defaultUser) 
+            }
+        }
+        .doOnError { auditLogger.carePlanMeasureUpdateFailed(goalId, measureId, defaultUser) }
     }
 
     @Transactional
@@ -120,7 +174,14 @@ class CarePlanServiceImpl(
         return Mono.fromCallable {
             goalRepository.findById(goalId).orElseThrow()
                 .let { GoalMapper.toDto(it) }
-        }.subscribeOn(Schedulers.boundedElastic())
+        }
+        .subscribeOn(Schedulers.boundedElastic())
+        .doOnSuccess { response -> 
+            response?.patientId?.let { patientId -> 
+                auditLogger.carePlanRetrieved(patientId, defaultUser) 
+            }
+        }
+        .doOnError { auditLogger.carePlanRetrievalFailed(defaultUser) }
     }
 
     @Transactional
@@ -129,10 +190,20 @@ class CarePlanServiceImpl(
         measureId: Long
     ): Mono<MeasureDto?> {
         return Mono.fromCallable {
-            goalRepository.findById(goalId).orElseThrow()
+            val goal = goalRepository.findById(goalId).orElseThrow()
             measureRepository.findById(measureId).orElseThrow()
                 .let { MeasureMapper.toDto(it) }
-        }.subscribeOn(Schedulers.boundedElastic())
+        }
+        .subscribeOn(Schedulers.boundedElastic())
+        .doOnSuccess { response -> 
+            response?.goalId?.let { 
+                val goal = goalRepository.findById(goalId).orElse(null)
+                goal?.patient?.id?.let { patientId ->
+                    auditLogger.carePlanRetrieved(patientId, defaultUser) 
+                }
+            }
+        }
+        .doOnError { auditLogger.carePlanRetrievalFailed(defaultUser) }
     }
 
     @Transactional
@@ -140,6 +211,11 @@ class CarePlanServiceImpl(
        return Mono.fromCallable {
            goalRepository.findAllByPatientId(patientId)
                .map { GoalMapper.toDto(it) }
-       }.subscribeOn(Schedulers.boundedElastic())
+       }
+       .subscribeOn(Schedulers.boundedElastic())
+       .doOnSuccess { 
+           auditLogger.carePlanRetrieved(patientId, defaultUser)
+       }
+       .doOnError { auditLogger.carePlanRetrievalFailed(defaultUser) }
     }
 }

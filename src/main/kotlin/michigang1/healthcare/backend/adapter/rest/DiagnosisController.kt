@@ -45,7 +45,7 @@ class DiagnosisController(private val diagnosisService: DiagnosisService) {
             .collectList()
             .map { ResponseEntity.ok(it) }
 
-    @PostMapping("/diagnoses")
+    @PostMapping("/patients/{patientId}/diagnoses")
     @PreAuthorize("hasRole('ADMIN') or" +
             " hasRole('ORGANISATION_ADMIN') or hasRole('DOCTOR')")
     fun createDiagnosis(

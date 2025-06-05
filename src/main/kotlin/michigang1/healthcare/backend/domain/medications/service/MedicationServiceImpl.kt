@@ -1,6 +1,7 @@
 package michigang1.healthcare.backend.domain.medications.service
 
 import jakarta.transaction.Transactional
+import michigang1.healthcare.backend.common.security.audit.AuditLogger
 import michigang1.healthcare.backend.domain.medications.Medication
 import michigang1.healthcare.backend.domain.medications.payload.MedicationMapper
 import michigang1.healthcare.backend.domain.medications.payload.MedicationRequest
@@ -19,14 +20,26 @@ class MedicationServiceImp(
     private val medicationRepository: MedicationRepository,
     private val medicationMapper: MedicationMapper,
     private val patientService: PatientService,
-    private val patientMapper: PatientMapper
+    private val patientMapper: PatientMapper,
+    private val auditLogger: AuditLogger
 ) : MedicationService {
+    private val defaultUser = "system" // Default user for audit logging
     override fun getAllMedications(): Flux<List<MedicationResponse>> {
         return Mono.fromCallable { medicationRepository.findAll() }
             .subscribeOn(Schedulers.boundedElastic())
             .map { medications ->
-                medications.map { medicationMapper.toResponse(it) }
+                val responses = medications.map { medicationMapper.toResponse(it) }
+                // Log each medication retrieval
+                responses.forEach { response ->
+                    response.id?.let { medicationId ->
+                        response.patientId?.let { patientId ->
+                            auditLogger.medicationRetrieved(medicationId, patientId, defaultUser)
+                        }
+                    }
+                }
+                responses
             }
+            .doOnError { auditLogger.medicationRetrievalFailed(defaultUser) }
             .flux()
     }
 
@@ -34,8 +47,16 @@ class MedicationServiceImp(
         return Mono.fromCallable { medicationRepository.findByPatientId(patientId) }
             .subscribeOn(Schedulers.boundedElastic())
             .map { medications ->
-                medications.map { medicationMapper.toResponse(it) }
+                val responses = medications.map { medicationMapper.toResponse(it) }
+                // Log each medication retrieval
+                responses.forEach { response ->
+                    response.id?.let { medicationId ->
+                        auditLogger.medicationRetrieved(medicationId, patientId, defaultUser)
+                    }
+                }
+                responses
             }
+            .doOnError { auditLogger.medicationRetrievalFailed(defaultUser) }
             .flux()
     }
 
@@ -47,6 +68,12 @@ class MedicationServiceImp(
         }
             .subscribeOn(Schedulers.boundedElastic())
             .map { medicationMapper.toResponse(it) }
+            .doOnSuccess { response -> 
+                response.id?.let { medicationId -> 
+                    auditLogger.medicationRetrieved(medicationId, patientId, defaultUser) 
+                }
+            }
+            .doOnError { auditLogger.medicationRetrievalFailed(defaultUser) }
 
     @Transactional
     override fun createMedication(request: MedicationRequest): Mono<MedicationResponse> {
@@ -62,6 +89,14 @@ class MedicationServiceImp(
                     .subscribeOn(Schedulers.boundedElastic())
             }
             .map { medicationMapper.toResponse(it) }
+            .doOnSuccess { response -> 
+                response.id?.let { medicationId -> 
+                    response.patientId?.let { patientId ->
+                        auditLogger.medicationCreated(medicationId, patientId, defaultUser) 
+                    }
+                }
+            }
+            .doOnError { auditLogger.medicationCreationFailed(defaultUser) }
     }
 
     @Transactional
@@ -87,6 +122,12 @@ class MedicationServiceImp(
         }
             .subscribeOn(Schedulers.boundedElastic())
             .map { medicationMapper.toResponse(it) }
+            .doOnSuccess { response -> 
+                response.id?.let { medicationId -> 
+                    auditLogger.medicationUpdated(medicationId, patientId, defaultUser) 
+                }
+            }
+            .doOnError { auditLogger.medicationUpdateFailed(id, patientId, defaultUser) }
 
     override fun deleteMedication(patientId: Long, id: Long): Mono<Boolean> =
         Mono.fromCallable {
@@ -96,4 +137,10 @@ class MedicationServiceImp(
             true
         }
             .subscribeOn(Schedulers.boundedElastic())
+            .doOnSuccess { success -> 
+                if (success) {
+                    auditLogger.medicationDeleted(id, patientId, defaultUser)
+                }
+            }
+            .doOnError { auditLogger.medicationDeletionFailed(id, patientId, defaultUser) }
 }
