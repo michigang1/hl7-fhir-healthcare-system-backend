@@ -16,4 +16,5 @@ interface MeasureRepository : JpaRepository<Measure, Long> {
 """)
     fun findAllWithGoalByPatientId(@Param("patientId") patientId: Long): List<Measure>
 
+    fun findByGoalId(goalId: Long): List<Measure>
 }

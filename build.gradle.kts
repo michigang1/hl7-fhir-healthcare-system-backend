@@ -63,9 +63,12 @@ dependencies {
     implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:2.1.0")
 
 
-    implementation("com.google.fhir:r4:0.6.1")
-    // Для JSON-парсера/принтера protobuf
-    implementation("com.google.protobuf:protobuf-java-util:3.24.0")
+    // HAPI FHIR dependencies
+    implementation("ca.uhn.hapi.fhir:hapi-fhir-base:6.10.0")
+    implementation("ca.uhn.hapi.fhir:hapi-fhir-structures-r4:6.10.0")
+    implementation("ca.uhn.hapi.fhir:hapi-fhir-validation-resources-r4:6.10.0")
+    implementation("ca.uhn.hapi.fhir:hapi-fhir-server:6.10.0")
+
     // (по желанию) kotlinx-serialization для DTO
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
 
