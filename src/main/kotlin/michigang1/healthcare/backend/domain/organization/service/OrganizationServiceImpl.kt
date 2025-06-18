@@ -22,15 +22,8 @@ class OrganizationServiceImpl(
     .subscribeOn(Schedulers.boundedElastic())
     .map { organizations ->
         val responses = organizations.map { OrganizationResponse(it.id, it.name) }
-        // Log each organization retrieval
-        responses.forEach { response ->
-            response.id?.let { organizationId ->
-                auditLogger.organizationRetrieved(organizationId, defaultUser)
-            }
-        }
         responses
     }
-    .doOnError { auditLogger.organizationRetrievalFailed(defaultUser) }
     .toFlux()
 
     override fun getById(id: Long): Mono<OrganizationResponse?> = Mono.fromCallable {
@@ -38,12 +31,6 @@ class OrganizationServiceImpl(
     }
     .subscribeOn(Schedulers.boundedElastic())
     .map { OrganizationResponse(it.id, it.name) }
-    .doOnSuccess { response -> 
-        response?.id?.let { organizationId -> 
-            auditLogger.organizationRetrieved(organizationId, defaultUser) 
-        }
-    }
-    .doOnError { auditLogger.organizationRetrievalFailed(defaultUser) }
 
 
 
@@ -52,12 +39,6 @@ class OrganizationServiceImpl(
     }
     .subscribeOn(Schedulers.boundedElastic())
     .map { OrganizationResponse(it.id, it.name) }
-    .doOnSuccess { response -> 
-        response?.id?.let { organizationId -> 
-            auditLogger.organizationRetrieved(organizationId, defaultUser) 
-        }
-    }
-    .doOnError { auditLogger.organizationRetrievalFailed(defaultUser) }
 
 
 }

@@ -9,16 +9,10 @@ import michigang1.healthcare.backend.domain.event.repository.EventRepository
 import michigang1.healthcare.backend.domain.medications.repository.MedicationRepository
 import michigang1.healthcare.backend.domain.patient.repository.PatientRepository
 import michigang1.healthcare.backend.domain.careplan.repository.MeasureRepository
-import michigang1.healthcare.backend.domain.patient.model.Patient as DomainPatient
-import michigang1.healthcare.backend.domain.diagnoses.model.Diagnosis
-import michigang1.healthcare.backend.domain.medications.Medication
-import michigang1.healthcare.backend.domain.event.model.Event
-import michigang1.healthcare.backend.domain.careplan.payload.GoalDto
 import org.hl7.fhir.r4.model.*
 import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Mono
-import java.util.*
 
 @Service
 @Primary
@@ -145,15 +139,15 @@ class FhirServiceImpl(
     // Encounter resources (events)
     override fun getEncounterResource(eventId: Long): Mono<Encounter> {
         return Mono.fromCallable {
-            val event = eventRepository.findById(eventId)
-                .orElseThrow { ResourceNotFoundException("Event not found with ID: $eventId") }
+            val event = eventRepository.findByIdWithAuthor(eventId)
+                ?: throw ResourceNotFoundException("Event not found with ID: $eventId")
             encounterConverter.toFhir(event)
         }
     }
 
     override fun getEncounterResourcesByPatient(patientId: Long): Mono<List<Encounter>> {
         return Mono.fromCallable {
-            val events = eventRepository.findByPatientsId(patientId)
+            val events = eventRepository.findByPatientsIdWithAuthor(patientId)
             events.map { encounterConverter.toFhir(it) }
         }
     }

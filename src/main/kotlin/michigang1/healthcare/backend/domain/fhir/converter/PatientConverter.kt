@@ -6,6 +6,7 @@ import org.hl7.fhir.r4.model.Enumerations
 import org.hl7.fhir.r4.model.HumanName
 import org.hl7.fhir.r4.model.Identifier
 import org.hl7.fhir.r4.model.Address
+import java.time.LocalDate
 
 object PatientConverter {
     fun toFhir(patient: Patient): org.hl7.fhir.r4.model.Patient {
@@ -83,7 +84,7 @@ object PatientConverter {
         }
 
         // Extract birth date
-        val birthDate = fhirPatient.birthDate?.toString() ?: java.time.LocalDate.now().toString()
+        val birthDate = fhirPatient.birthDate?.toString() ?: LocalDate.now().toString()
 
         // Extract contact info
         val phone = fhirPatient.telecom

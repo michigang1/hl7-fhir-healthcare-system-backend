@@ -29,17 +29,8 @@ class DiagnosisServiceImp(
             .subscribeOn(Schedulers.boundedElastic())
             .map { diagnosis ->
                 val responses = diagnosis.map { diagnosisMapper.toResponse(it) }
-                // Log each diagnosis retrieval
-                responses.forEach { response ->
-                    response.id?.let { diagnosisId ->
-                        response.patientId?.let { patientId ->
-                            auditLogger.diagnosisRetrieved(diagnosisId, patientId, defaultUser)
-                        }
-                    }
-                }
                 responses
             }
-            .doOnError { auditLogger.diagnosisRetrievalFailed(defaultUser) }
             .flux()
     }
 
@@ -48,27 +39,14 @@ class DiagnosisServiceImp(
             .subscribeOn(Schedulers.boundedElastic())
             .map { diagnosis ->
                 val responses = diagnosis.map { diagnosisMapper.toResponse(it) }
-                // Log each diagnosis retrieval
-                responses.forEach { response ->
-                    response.id?.let { diagnosisId ->
-                        auditLogger.diagnosisRetrieved(diagnosisId, patientId, defaultUser)
-                    }
-                }
                 responses
             }
-            .doOnError { auditLogger.diagnosisRetrievalFailed(defaultUser) }
             .flux()
     }
 
     override fun getDiagnosisByPatient(patientId: Long, id: Long): Mono<DiagnosisResponse?> {
         return Mono.fromCallable { diagnosisRepository.findByPatientIdAndId(patientId, id) ?: throw NoSuchElementException("Diagnosis not found") }
             .map { diagnosisMapper.toResponse(it) }
-            .doOnSuccess { response -> 
-                response?.id?.let { diagnosisId -> 
-                    auditLogger.diagnosisRetrieved(diagnosisId, patientId, defaultUser) 
-                }
-            }
-            .doOnError { auditLogger.diagnosisRetrievalFailed(defaultUser) }
     }
 
     @Transactional

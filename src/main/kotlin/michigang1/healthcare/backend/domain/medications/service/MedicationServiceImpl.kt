@@ -29,17 +29,8 @@ class MedicationServiceImp(
             .subscribeOn(Schedulers.boundedElastic())
             .map { medications ->
                 val responses = medications.map { medicationMapper.toResponse(it) }
-                // Log each medication retrieval
-                responses.forEach { response ->
-                    response.id?.let { medicationId ->
-                        response.patientId?.let { patientId ->
-                            auditLogger.medicationRetrieved(medicationId, patientId, defaultUser)
-                        }
-                    }
-                }
                 responses
             }
-            .doOnError { auditLogger.medicationRetrievalFailed(defaultUser) }
             .flux()
     }
 
@@ -48,15 +39,8 @@ class MedicationServiceImp(
             .subscribeOn(Schedulers.boundedElastic())
             .map { medications ->
                 val responses = medications.map { medicationMapper.toResponse(it) }
-                // Log each medication retrieval
-                responses.forEach { response ->
-                    response.id?.let { medicationId ->
-                        auditLogger.medicationRetrieved(medicationId, patientId, defaultUser)
-                    }
-                }
                 responses
             }
-            .doOnError { auditLogger.medicationRetrievalFailed(defaultUser) }
             .flux()
     }
 
@@ -68,12 +52,6 @@ class MedicationServiceImp(
         }
             .subscribeOn(Schedulers.boundedElastic())
             .map { medicationMapper.toResponse(it) }
-            .doOnSuccess { response -> 
-                response.id?.let { medicationId -> 
-                    auditLogger.medicationRetrieved(medicationId, patientId, defaultUser) 
-                }
-            }
-            .doOnError { auditLogger.medicationRetrievalFailed(defaultUser) }
 
     @Transactional
     override fun createMedication(request: MedicationRequest): Mono<MedicationResponse> {

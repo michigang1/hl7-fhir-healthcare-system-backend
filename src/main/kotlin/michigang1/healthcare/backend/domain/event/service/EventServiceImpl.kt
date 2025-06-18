@@ -30,15 +30,8 @@ class EventServiceImpl(
             .subscribeOn(Schedulers.boundedElastic())
             .map { events ->
                 val responses = events.map { eventMapper.toResponse(it) }
-                // Log each event retrieval
-                responses.forEach { response ->
-                    response.id?.let { eventId ->
-                        auditLogger.eventRetrieved(eventId, defaultUser)
-                    }
-                }
                 responses
             }
-            .doOnError { auditLogger.eventRetrievalFailed(defaultUser) }
             .flux()
     }
 
@@ -46,12 +39,6 @@ class EventServiceImpl(
         return Mono.fromCallable { eventRepository.findByIdWithAuthor(id) }
             .subscribeOn(Schedulers.boundedElastic())
             .map { event -> event?.let { eventMapper.toResponse(it) } }
-            .doOnSuccess { response -> 
-                response?.id?.let { eventId -> 
-                    auditLogger.eventRetrieved(eventId, defaultUser) 
-                }
-            }
-            .doOnError { auditLogger.eventRetrievalFailed(defaultUser) }
     }
 
     override fun getEventsByPatient(patientId: Long): Flux<List<EventResponse>> {
@@ -59,15 +46,8 @@ class EventServiceImpl(
             .subscribeOn(Schedulers.boundedElastic())
             .map { events ->
                 val responses = events.map { eventMapper.toResponse(it) }
-                // Log each event retrieval
-                responses.forEach { response ->
-                    response.id?.let { eventId ->
-                        auditLogger.eventRetrieved(eventId, defaultUser)
-                    }
-                }
                 responses
             }
-            .doOnError { auditLogger.eventRetrievalFailed(defaultUser) }
             .flux()
     }
 

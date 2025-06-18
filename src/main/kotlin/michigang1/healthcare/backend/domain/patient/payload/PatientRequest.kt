@@ -10,12 +10,12 @@ data class PatientRequest (
     @field:NotNull
     val id: Long = 0,
     @field:Pattern(
-        regexp = "^[a-zA-Zа-яА-ЯёЁ\\s-]+$",
+        regexp = "^[a-zA-Zа-яА-ЯёЁіїєґІЇЄҐ\\s-]+$",
         message = "Name must contain only letters, spaces, and hyphens"
     )
     val name: String?,
     @field:Pattern(
-        regexp = "^[a-zA-Zа-яА-ЯёЁ\\s-]+$",
+        regexp = "^[a-zA-Zа-яА-ЯёЁіїєґІЇЄҐ\\s-]+$",
         message = "Surname must contain only letters, spaces, and hyphens"
     )
     val surname: String?,
@@ -35,13 +35,13 @@ data class PatientRequest (
     )
     val gender: String?,
     @field:Pattern(
-        regexp = "^[a-zA-Z0-9\\s,.-]+$",
+        regexp = "^[a-zA-Zа-яА-ЯёЁіїєґІЇЄҐ0-9\\s,.-]+$",
         message = "Address must contain only letters, numbers, spaces, commas, periods, and hyphens"
     )
     val address: String?,
 
     @field:Pattern(
-        regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+        regexp = "^[a-zA-Zа-яА-ЯёЁіїєґІЇЄҐ0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
         message = "Email must be in a valid format"
     )
     val email: String?,

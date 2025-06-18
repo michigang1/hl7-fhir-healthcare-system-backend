@@ -1,14 +1,12 @@
 package michigang1.healthcare.backend.common.util.fhir
 
 import michigang1.healthcare.backend.domain.diagnoses.model.Diagnosis
-import michigang1.healthcare.backend.domain.patient.model.Patient
 import michigang1.healthcare.backend.domain.patient.repository.PatientRepository
 import org.hl7.fhir.r4.model.CodeableConcept
 import org.hl7.fhir.r4.model.Coding
 import org.hl7.fhir.r4.model.Condition
 import org.hl7.fhir.r4.model.Reference
 import java.time.LocalDate
-import java.time.ZoneId
 import java.util.*
 
 class ConditionConverter(private val patientRepository: PatientRepository) {

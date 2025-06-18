@@ -61,12 +61,6 @@ class PatientServiceImpl(
             )
         }
         .subscribeOn(Schedulers.boundedElastic())
-        .doOnSuccess { response -> 
-            response?.id?.let { patientId -> 
-                auditLogger.patientRetrieved(patientId, defaultUser) 
-            }
-        }
-        .doOnError { auditLogger.patientRetrievalFailed(defaultUser) }
     }
 
     override fun getByFirstName(name: String): Mono<PatientResponse?> {

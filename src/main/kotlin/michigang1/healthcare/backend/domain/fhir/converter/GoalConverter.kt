@@ -3,7 +3,6 @@ package michigang1.healthcare.backend.common.util.fhir
 import michigang1.healthcare.backend.domain.careplan.payload.GoalDto
 import michigang1.healthcare.backend.domain.careplan.repository.MeasureRepository
 import org.hl7.fhir.r4.model.*
-import java.time.ZoneId
 import java.util.*
 
 class GoalConverter(private val measureRepository: MeasureRepository) {

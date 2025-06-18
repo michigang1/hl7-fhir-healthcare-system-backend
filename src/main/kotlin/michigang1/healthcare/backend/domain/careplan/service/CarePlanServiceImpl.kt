@@ -30,12 +30,6 @@ class CarePlanServiceImpl(
             measureRepository.findAllWithGoalByPatientId(patientId).map { MeasureMapper.toDto(it) }
       }
       .subscribeOn(Schedulers.boundedElastic())
-      .doOnSuccess { 
-          auditLogger.carePlanRetrieved(patientId, defaultUser)
-      }
-      .doOnError { 
-          auditLogger.carePlanRetrievalFailed(defaultUser)
-      }
     }
 
     @Transactional
@@ -176,12 +170,6 @@ class CarePlanServiceImpl(
                 .let { GoalMapper.toDto(it) }
         }
         .subscribeOn(Schedulers.boundedElastic())
-        .doOnSuccess { response -> 
-            response?.patientId?.let { patientId -> 
-                auditLogger.carePlanRetrieved(patientId, defaultUser) 
-            }
-        }
-        .doOnError { auditLogger.carePlanRetrievalFailed(defaultUser) }
     }
 
     @Transactional
@@ -195,15 +183,6 @@ class CarePlanServiceImpl(
                 .let { MeasureMapper.toDto(it) }
         }
         .subscribeOn(Schedulers.boundedElastic())
-        .doOnSuccess { response -> 
-            response?.goalId?.let { 
-                val goal = goalRepository.findById(goalId).orElse(null)
-                goal?.patient?.id?.let { patientId ->
-                    auditLogger.carePlanRetrieved(patientId, defaultUser) 
-                }
-            }
-        }
-        .doOnError { auditLogger.carePlanRetrievalFailed(defaultUser) }
     }
 
     @Transactional
@@ -213,9 +192,5 @@ class CarePlanServiceImpl(
                .map { GoalMapper.toDto(it) }
        }
        .subscribeOn(Schedulers.boundedElastic())
-       .doOnSuccess { 
-           auditLogger.carePlanRetrieved(patientId, defaultUser)
-       }
-       .doOnError { auditLogger.carePlanRetrievalFailed(defaultUser) }
     }
 }
